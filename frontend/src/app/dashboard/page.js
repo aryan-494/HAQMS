@@ -13,7 +13,10 @@ import {
 
 export default function Dashboard() {
   const { user, token, API_BASE_URL, logout } = useAuth();
-  const router = useRouter();
+const router = useRouter();
+
+const role = user?.role;
+const userId = user?.id;
 
   // Navigation Guard
   useEffect(() => {
@@ -22,10 +25,23 @@ export default function Dashboard() {
     }
   }, [user]);
 
-  if (!user) return null;
 
   // Global State
-  const [activeTab, setActiveTab] = useState(user.role === 'ADMIN' ? 'reports' : user.role === 'RECEPTIONIST' ? 'patients' : 'appointments');
+ // Global State
+const [activeTab, setActiveTab] = useState('reports');
+
+useEffect(() => {
+  if (!user) return;
+
+  setActiveTab(
+    user.role === 'ADMIN'
+      ? 'reports'
+      : user.role === 'RECEPTIONIST'
+      ? 'patients'
+      : 'appointments'
+  );
+}, [user]);
+
 
   // ==========================================
   // STATE FOR RECEPTIONIST WORKFLOWS
@@ -98,10 +114,10 @@ export default function Dashboard() {
 
   // Trigger Patient List Fetch (Every keystroke trigger re-renders parent! - Performance bug)
   useEffect(() => {
-    if (user.role === 'RECEPTIONIST' || user.role === 'ADMIN') {
-      fetchPatients(1);
-    }
-  }, [patientSearch, patientGender]);
+  if (role === 'RECEPTIONIST' || role === 'ADMIN') {
+    fetchPatients(1);
+  }
+}, [role, patientSearch, patientGender]);
 
   // Fetch Doctors for booking drop-down
   const fetchDoctorsDropdown = async () => {
@@ -202,7 +218,7 @@ if (Number(regAge) <= 0 || Number(regAge) > 120) {
       if (res.ok) {
         setBookingMessage('Success: Appointment booked successfully!');
         setBookingReason('');
-        if (user.role === 'DOCTOR') fetchDoctorWorklist();
+        if (role === 'DOCTOR') fetchDoctorWorklist();
       } else {
         setBookingMessage(`Error: ${data.error || 'Failed to book'}`);
       }
@@ -259,10 +275,10 @@ if (Number(regAge) <= 0 || Number(regAge) > 120) {
   // DOCTOR WORKFLOW FUNCTIONS
   // ==========================================
   const fetchDoctorWorklist = async () => {
-    if (user.role !== 'DOCTOR') return;
+    if (role !== 'DOCTOR') return;
     try {
       // Find matching doctor from doctors dropdown using user ID link
-      const matchedDoc = doctorsList.find(d => d.userId === user.id);
+      const matchedDoc = doctorsList.find(d => d.userId === userId);
       if (!matchedDoc) return;
 
       // 1. Fetch appointments for this doctor (N+1 database queries triggers inside server)
@@ -287,7 +303,7 @@ if (Number(regAge) <= 0 || Number(regAge) > 120) {
   };
 
   useEffect(() => {
-    if (user.role === 'DOCTOR' && doctorsList.length > 0) {
+    if (role === 'DOCTOR' && doctorsList.length > 0) {
       fetchDoctorWorklist();
     }
   }, [doctorsList]);
@@ -369,7 +385,7 @@ if (Number(regAge) <= 0 || Number(regAge) > 120) {
       console.error(e);
     }
   };
-
+if (!user) return null;
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
