@@ -1,98 +1,180 @@
-# HAQMS: Hospital Appointment & Queue Management System
+# HAQMS — Hospital Appointment & Queue Management System
 
-Welcome to **HAQMS (Hospital Appointment & Queue Management System)**. This is a fully functional, deliberately imperfect full-stack web application designed for engineering internship candidate evaluations. 
+> **SDE Internship Assessment Submission**
+> Audited, refactored, and documented by **Aryan Mishra**
 
-Candidates are tasked with auditing the codebase to identify, debug, profile, secure, and optimize performance bottlenecks, memory leaks, concurrency issues, and security vulnerabilities.
-
----
-
-## 🛠️ Tech Stack
-- **Frontend**: Next.js (App Router, Tailwind CSS, Lucide icons, Context API)
-- **Backend**: Node.js + Express
-- **Database & ORM**: PostgreSQL + Prisma ORM
-- **Process Management**: Docker Compose (Optional local PostgreSQL helper)
+HAQMS is a full-stack Hospital Appointment & Queue Management System. This repository was submitted as part of an SDE Internship technical assessment, with a focus on security hardening, performance optimization, concurrency safety, and frontend reliability.
 
 ---
 
-## 🚀 Getting Started & Setup
+## Tech Stack
 
-Follow these steps to spin up the local development workspace:
+| Layer | Technology |
+|---|---|
+| **Frontend** | Next.js, React, Context API, Tailwind CSS, Lucide Icons |
+| **Backend** | Node.js, Express.js |
+| **Database** | PostgreSQL, Prisma ORM |
 
-### 1. Auto-Install Dependencies
-Run the included workspace orchestrator bootstrap script to install packages in the root, frontend, and backend packages:
+---
+
+## Local Setup
+
+### Prerequisites
+
+- Node.js v18+
+- PostgreSQL (or Docker)
+- npm
+
+---
+
+### 1. Clone the Repository
+
 ```bash
-chmod +x setup.sh
-./setup.sh
+git clone <repository-url>
+cd HAQMS
 ```
 
-### 2. Launch the Database
-You need a running PostgreSQL server. If you have Docker installed, you can spin up the preconfigured container:
+### 2. Install Dependencies
+
+```bash
+npm run install:all
+```
+
+### 3. Configure Environment Variables
+
+**Backend** — create `backend/.env`:
+
+```env
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/haqms?schema=public"
+JWT_SECRET="your-secret-key"
+PORT=5000
+NODE_ENV=development
+```
+
+**Frontend** — create `frontend/.env.local`:
+
+```env
+NEXT_PUBLIC_API_URL=http://localhost:5000/api
+```
+
+### 4. Start PostgreSQL
+
+Using Docker:
+
 ```bash
 docker-compose up -d
 ```
-Alternatively, configure your local PostgreSQL server and update the connection URL in `backend/.env`:
-```env
-DATABASE_URL="postgresql://<user>:<password>@localhost:5432/haqms?schema=public"
-```
 
-### 3. Deploy Schema & Seed Mock Data
-Apply Prisma schema migrations to the database and populate it with pre-built mock records (including administrative logins, medical histories, physician slots, and queue tokens):
+### 5. Set Up the Database
+
 ```bash
 npm run db:setup --prefix backend
 ```
 
-### 4. Boot Dev Servers
-Launch both the Next.js development client (port `3000`) and the Express API server (port `5000`) concurrently using:
+This will:
+- Apply all Prisma migrations
+- Seed the database with mock application data
+
+### 6. Start the Application
+
+Run backend and frontend separately:
+
+```bash
+npm run dev:backend
+npm run dev:frontend
+```
+
+Or start both together:
+
 ```bash
 npm run dev
 ```
 
 ---
 
-## 🔑 Pre-Seeded Accounts
-The database seed script populates the database with default accounts (All passwords are **`password123`**):
+## Default Accounts
 
-| Role | Email | Purpose / Flow Testing |
-|---|---|---|
-| **Administrator** | `admin@haqms.com` | Access system reports, view audit logs, view full physician registries |
-| **Receptionist** | `reception1@haqms.com` | Register patients, book slots, perform direct queue check-in |
-| **Doctor** | `doctor1@haqms.com` | View daily patient worklist, manage active calling monitors, read history |
+> All seed accounts use the password: `password123`
 
----
-
-## 🎯 Internship Evaluation Tasks
-
-As an internship candidate, your evaluation is divided into five core objectives:
-
-### 🔍 Challenge 1: Security Audit
-Identify and patch several production-level security bugs:
-- **Credential Logging**: Find where raw user passwords are logged in plain text.
-- **Leaky Token Signature**: Audit how JWTs are signed, stored, and verified.
-- **SQL Injection**: Locate the search input vulnerable to SQL injection and rewrite it using parameterized queries.
-- **Bypassed Authorization**: Find the admin action endpoint that fails to enforce actual role authorizations.
-
-### ⚡ Challenge 2: Backend Performance & Concurrency
-Analyze and optimize backend logic:
-- **N+1 Database Queries**: Identify the endpoint fetching core list elements but executing separate queries per row in a loop.
-- **Event-Loop Blocking**: Locate sequential async database queries where parallel triggers should be utilized.
-- **Slow aggregation endpoint**: Fix the slow nested report endpoint that locks the event loop.
-- **Check-in Token Race Condition**: Find why concurrent direct check-ins assign duplicate token numbers and patch it using transaction locks or auto-increment sequences.
-
-### 💾 Challenge 3: Database & Schema Optimization
-Refactor DB layers:
-- **Schema Vulnerabilities**: Locate the missing constraints that permit double-booking the same physician at the exact same millisecond slot.
-- **Missing Indices**: Add appropriate indices to speed up foreign key relationships and status filters under load.
-- **Paging Optimization**: Fix the listing route that performs in-memory pagination slicing instead of SQL pagination.
-
-### 🖥️ Challenge 4: Frontend Memory & React Optimization
-Examine frontend React components:
-- **Severe Memory Leak**: Navigate to the Live Public Queue Board (`/queue`). Mount and unmount it repeatedly. Find the leak in `src/app/queue/page.js` and patch it.
-- **Unnecessary Re-renders**: Optimize search input fields that trigger complete list re-renders on every single keystroke.
-- **NULL Value Application Crash**: Log in as a Doctor (`doctor1@haqms.com`), click on one of the patients with a blank medical history (e.g., Clark Kent or Bruce Wayne), and diagnose why the entire React app crashes on rendering.
-
-### 🏗️ Challenge 5: Incomplete Feature Delivery
-- **Resolve styled 404 error**: Clicking "View Diagnostic Reports Details (Legacy App)" on a patient profile triggers a 404 page. Your final task is to build out that missing page (`src/app/patients/[id]/history-records/page.js`) to fetch and render the patient clinical record.
+| Role | Email |
+|---|---|
+| Administrator | `admin@haqms.com` |
+| Receptionist | `reception1@haqms.com` |
+| Doctor | `doctor1@haqms.com` |
 
 ---
 
-Good luck! You will be evaluated based on the cleanliness, correctness, efficiency, and safety of your refactoring.
+## Audit & Refactoring Summary
+
+This repository was reviewed and refactored across six domains. All critical and high-severity issues have been resolved.
+
+### Security
+
+| Fix | Status |
+|---|---|
+| Removed sensitive credential logging from auth routes | ✅ |
+| Enforced JWT expiration validation | ✅ |
+| Removed hardcoded JWT secret fallback | ✅ |
+| Fixed authorization bypass in admin middleware | ✅ |
+| Fixed SQL injection vulnerability in doctor search | ✅ |
+| Removed password hash exposure from registration response | ✅ |
+| Eliminated internal error and stack trace leakage | ✅ |
+
+### Performance
+
+| Fix | Status |
+|---|---|
+| Resolved N+1 query problem in appointment retrieval | ✅ |
+| Parallelized independent aggregation queries | ✅ |
+| Refactored slow administrative reporting endpoint | ✅ |
+| Moved pagination to database layer | ✅ |
+
+### Concurrency
+
+| Fix | Status |
+|---|---|
+| Fixed queue token race condition (read-then-write pattern) | ✅ |
+
+### Frontend
+
+| Fix | Status |
+|---|---|
+| Fixed polling interval memory leak on queue page | ✅ |
+| Fixed React Hook violations causing dashboard crashes | ✅ |
+| Migrated hardcoded API URL to environment variable | ✅ |
+
+### Database
+
+| Fix | Status |
+|---|---|
+| Reconstructed missing Prisma schema | ✅ |
+| Restored migrations and seed data | ✅ |
+| Added indexes on high-frequency query fields | ✅ |
+
+---
+
+## Documentation
+
+Full findings, risk assessments, and remediation details are documented in:
+
+```
+AUDIT_REPORT.md
+```
+
+---
+
+## Notes
+
+A small number of findings were documented but not fully implemented within the assignment scope, due to time constraints or repository boundaries. Prioritization was based on:
+
+- Security impact and attack surface
+- Data integrity risk
+- Application stability
+- Production readiness
+
+---
+
+## Candidate
+
+**Aryan Mishra**
+SDE Intern Assessment Submission — 27 May 2026
