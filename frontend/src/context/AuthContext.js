@@ -15,7 +15,9 @@ export const AuthProvider = ({ children }) => {
   // HARDCODED API VALUE: Intentionally hardcoding the backend base URL on the frontend!
   // This violates production standards and prevents simple domain config, but serves as
   // a perfect exercise for internship candidates to move to environment variables.
-  const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL ||
+  'http://localhost:5000/api';
 
   useEffect(() => {
     // Check for stored token and user on initialization
@@ -57,7 +59,7 @@ export const AuthProvider = ({ children }) => {
       const receivedUser = data.data.user;
 
       // SECURITY ISSUE: Storing sensitive auth credentials directly in LocalStorage!
-      localStorage.setItem('haqms_token', receivedToken);
+      localStorage.setItem('haqms_token',  JSON.stringify(receivedUser));
       localStorage.setItem('haqms_user', JSON.stringify(receivedUser));
 
       setToken(receivedToken);
