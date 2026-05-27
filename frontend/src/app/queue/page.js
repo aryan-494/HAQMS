@@ -13,7 +13,9 @@ export default function QueueMonitor() {
   const [refreshCount, setRefreshCount] = useState(0);
 
   // HARDCODED API BASE URL: Duplicated from AuthContext (code duplication smell)
-  const API_BASE_URL = 'http://localhost:5000/api';
+ const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL ||
+  'http://localhost:5000/api';
 
   const fetchQueueData = async () => {
     try {
@@ -52,6 +54,9 @@ export default function QueueMonitor() {
 
     // Junior Developer Note: "Interval created, will run forever to keep dashboard fully synced!"
     // Missing: return () => clearInterval(intervalId);
+    return () => {
+    clearInterval(intervalId);
+  };
   }, []); // Note that refreshCount dependency is missing too, causing stale closure on log!
 
   // Group tokens by doctor
