@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import Navbar from '@/components/common/Navbar';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { 
   Users, CalendarDays, Activity, Search, Sparkles, UserPlus, 
   Trash2, ClipboardList, TrendingUp, DollarSign, Award, Clock,
@@ -126,10 +127,15 @@ export default function Dashboard() {
 
     // INCONSISTENT VALIDATION: Receptionist form doesn't validate telephone structure on client, 
     // leading to database pollution (e.g. text telephone values)
-    if (!regName || !regPhone || !regAge) {
-      setRegMessage('Error: Name, Age and Phone number are required.');
-      return;
-    }
+   if (!/^\d{10}$/.test(regPhone)) {
+  setRegMessage('Error: Phone number must contain exactly 10 digits.');
+  return;
+}
+
+if (Number(regAge) <= 0 || Number(regAge) > 120) {
+  setRegMessage('Error: Invalid age.');
+  return;
+}
 
     try {
       const res = await fetch(`${API_BASE_URL}/patients`, {
@@ -509,13 +515,15 @@ export default function Dashboard() {
                                 </button>
                                 
                                 {/* Security flaw testing: Receptionist or doctor can delete since check is bypassed */}
-                                <button
-                                  onClick={() => handleDeletePatient(p.id)}
-                                  className="text-xxs p-1 rounded bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white transition-colors"
-                                  title="Delete patient record"
-                                >
-                                  <Trash2 className="h-3.5 w-3.5" />
-                                </button>
+                                {user.role === 'ADMIN' && (
+  <button
+    onClick={() => handleDeletePatient(p.id)}
+    className="text-xxs p-1 rounded bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white transition-colors"
+    title="Delete patient record"
+  >
+    <Trash2 className="h-3.5 w-3.5" />
+  </button>
+)}
                               </td>
                             </tr>
                           ))}
@@ -894,7 +902,7 @@ export default function Dashboard() {
                       without optional chaining! If medicalHistory is null (which is the case for Batman, Clark Kent, etc.),
                       this code throws: "Cannot read properties of null (reading 'toUpperCase')" and crashes the app! */}
                   <p className="text-slate-700 dark:text-slate-300 leading-5 text-sm font-semibold">
-                    {selectedPatientHistory.medicalHistory.toUpperCase()}
+                   {selectedPatientHistory.medicalHistory ? selectedPatientHistory.medicalHistory.toUpperCase() : 'NO MEDICAL HISTORY AVAILABLE'}
                   </p>
                 </div>
 
